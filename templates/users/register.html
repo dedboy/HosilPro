@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow p-4">
+            <h2 class="text-center mb-4">Ro'yxatdan o'tish</h2>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success w-100 mt-3">Yuborish</button>
+            </form>
+            <p class="mt-3 text-center">Profilingiz bormi? <a href="/login/">Kirish</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
