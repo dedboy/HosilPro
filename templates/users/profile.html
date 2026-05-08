@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user.is_farmer %}
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-primary text-white shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h6 class="small">Jami e'lonlarim</h6>
+                    <h3 class="fw-bold">{{ stats.total_auctions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-success text-white shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h6 class="small">Aktiv auksionlar</h6>
+                    <h3 class="fw-bold">{{ stats.active_auctions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-info text-white shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h6 class="small">Kelgan takliflar</h6>
+                    <h3 class="fw-bold">{{ stats.total_bids_received }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-warning text-dark shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h6 class="small">Yutilganlar</h6>
+                    <h3 class="fw-bold">{{ stats.won_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-4 col-md-5">
+            <div class="card shadow-sm border-0 text-center p-4 mb-4">
+                <div class="mx-auto bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow"
+                     style="width: 100px; height: 100px; font-size: 2.5rem; border: 4px solid #fff;">
+                    {{ user.username|first|upper }}
+                </div>
+                <h4 class="mt-3 fw-bold">{{ user.username }}</h4>
+                <p class="text-muted mb-1"><i class="bi bi-envelope"></i> {{ user.email }}</p>
+                <p class="text-muted"><i class="bi bi-telephone"></i> {{ user.phone_number|default:"Kiritilmagan" }}</p>
+                <hr>
+                <div class="text-start">
+                    <p class="mb-2"><strong><i class="bi bi-geo-alt"></i> Viloyat:</strong> {{ user.get_region_display }}</p>
+                    <p><strong><i class="bi bi-person-badge"></i> Rollari:</strong><br>
+                        {% if user.is_farmer %}
+                        <span class="badge bg-success shadow-sm mt-1">Fermer</span>
+                        {% endif %}
+                        {% if user.is_restaurant %}
+                        <span class="badge bg-primary shadow-sm mt-1">Restoran / Xaridor</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 col-md-7">
+            <div class="d-flex align-items-center mb-3">
+                <h3 class="fw-bold mb-0">🏆 Yutilgan auksionlar</h3>
+                <span class="badge bg-secondary ms-2">{{ won_products.count }}</span>
+            </div>
+            <div class="row mb-5">
+                {% for product in won_products %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-success shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">{{ product.title }}</h5>
+                            <p class="text-success mb-0 small">Siz tomondan to'langan: <strong>{{ product.current_price }} so'm</strong></p>
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-success mt-2 w-100">Tovarni ko'rish</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-light border text-muted">Siz hali hech qanday auksionda g'olib bo'lmadingiz.</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex align-items-center mb-3">
+                <h3 class="fw-bold mb-0">📦 Mening e'lonlarim</h3>
+                <span class="badge bg-secondary ms-2">{{ my_products.count }}</span>
+            </div>
+            <div class="row">
+                {% for product in my_products %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-truncate">{{ product.title }}</h5>
+                            <p class="small mb-1">
+                                Holati:
+                                {% if product.is_finished %}
+                                <span class="badge bg-danger">Tugagan</span>
+                                {% else %}
+                                <span class="badge bg-primary">Davom etmoqda</span>
+                                {% endif %}
+                            </p>
+                            <p class="text-muted small mb-2">Joriy narx: {{ product.get_current_price }} so'm</p>
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-outline-dark mt-auto w-100">Boshqarish</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-light border text-muted">Siz hali mahsulot qo'shmadingiz.</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

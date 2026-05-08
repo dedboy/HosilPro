@@ -18,7 +18,7 @@ class User(AbstractUser):
         ('sirdaryo', 'Sirdaryo'),
         ('qoraqalpogiston', 'Qoraqalpog\'iston'),
     ]
-
+    
     is_farmer = models.BooleanField(default=False, verbose_name="Fermermi?")
     is_restaurant = models.BooleanField(default=False, verbose_name="Restoranmi?")
     phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name="Telefon raqami")

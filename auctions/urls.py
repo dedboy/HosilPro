@@ -1,8 +1,10 @@
 from django.urls import path
-from .views import product_list, product_detail, product_create
+from . import views
 
 urlpatterns = [
-    path('', product_list, name='product_list'),
-    path('product/<int:pk>/', product_detail, name='product_detail'),
-    path('product/new/', product_create, name='product_create'),
+    path('', views.product_list, name='product_list'),
+    path('product/<int:pk>/', views.product_detail, name='product_detail'),
+    path('product/create/', views.product_create, name='product_create'),
+    path('my-participation/', views.my_bids, name='my_bids'), # Yangi!
+    path('categories/', views.category_list, name='category_list'), # Yangi!
 ]

@@ -12,7 +12,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=200, verbose_name="Mahsulot nomi")
     description = models.TextField(verbose_name="Batafsil ma'lumot")
     image = models.ImageField(upload_to='products/', verbose_name="Rasm")
@@ -27,14 +27,37 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # winner uchun settings.AUTH_USER_MODEL dan foydalanamiz
+    winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                               null=True, blank=True, related_name='won_auctions')
+
+    def get_current_price(self):
+        """Joriy narxni qaytaradi"""
+        return self.current_price if self.current_price else self.start_price
+
+    def is_finished(self):
+        """Auksion vaqti tugaganini tekshiradi"""
+        return timezone.now() > self.end_time
+
+    def determine_winner(self):
+        """Auksion tugagan bo'lsa, eng baland narx egasini aniqlaydi"""
+        if self.is_finished() and not self.winner:
+            highest_bid = self.bids.order_by('-amount').first()
+            if highest_bid:
+                self.winner = highest_bid.user
+                self.save()
+        return self.winner
+
     def update_price(self):
-        # Eng baland narxni topish
+        """Eng baland narxni topib, current_price ni yangilaydi"""
         highest_bid = self.bids.order_by('-amount').first()
         if highest_bid:
             self.current_price = highest_bid.amount
             self.save()
+
     def __str__(self):
         return self.title
+
 
 class Bid(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='bids')
@@ -46,4 +69,4 @@ class Bid(models.Model):
         return f"{self.user.username} - {self.amount} ({self.product.title})"
 
     class Meta:
-        ordering = ['-amount']  # Eng baland narx har doim tepada tursin
+        ordering = ['-amount']
