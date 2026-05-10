@@ -1,20 +1,32 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth import login  # Avtomatik kirish uchun
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.db.models import Count
 from .forms import UserRegisterForm
 from auctions.models import Product, Bid
 
 
 def register(request):
+    # Agar foydalanuvchi allaqachon tizimga kirgan bo'lsa, uni profilga yuboramiz
+    if request.user.is_authenticated:
+        return redirect('profile')
+
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()  # Foydalanuvchini saqlaymiz
             username = form.cleaned_data.get('username')
-            messages.success(request, f"Hisob yaratildi: {username}! Endi kirishingiz mumkin.")
-            return redirect('login')
+
+            # Ro'yxatdan o'tgach avtomatik tizimga kiritish (ixtiyoriy, lekin qulay)
+            login(request, user)
+
+            messages.success(request, f"Xush kelibsiz, {username}! Hisobingiz muvaffaqiyatli yaratildi.")
+
+            # Agar fermer bo'lsa, mahsulot qo'shishga, aks holda auksionlarga yo'naltiramiz
+            if user.is_farmer:
+                return redirect('product_create')  # Bu view nomi auctions/urls.py da bo'lishi kerak
+            return redirect('product_list')
     else:
         form = UserRegisterForm()
     return render(request, 'users/register.html', {'form': form})
@@ -25,20 +37,21 @@ def profile(request):
     # 1. Foydalanuvchi o'zi sotuvga qo'ygan mahsulotlar
     my_products = Product.objects.filter(owner=request.user).order_by('-created_at')
 
-    # 2. Foydalanuvchi yutib olgan auksionlar
+    # 2. Foydalanuvchi yutib olgan auksionlar (winner maydoni mahsulotda bo'lishi kerak)
+    # Ba'zan modelda winner maydoni bo'lmasligi mumkin, shuni tekshirib ko'ring
     won_products = Product.objects.filter(winner=request.user).order_by('-end_time')
 
     # 3. Foydalanuvchi narx urgan barcha auksionlar (tarixi)
-    # Bu qism foydalanuvchi qaysi auksionlarda qatnashayotganini ko'rsatadi
-    my_bids = Bid.objects.filter(user=request.user).select_related('product').order_by('-timestamp')
+    # select_related bazaga so'rovni kamaytiradi (Optimization)
+    my_bids = Bid.objects.filter(user=request.user).select_related('product').order_by('-created_at')
 
-    # 4. Statistika (Fermerlar va faol foydalanuvchilar uchun)
+    # 4. Statistika
+    now = timezone.now()
     stats = {
-        'total_auctions': my_products.count(),  # Jami qo'shgan e'lonlari
-        'active_auctions': my_products.filter(end_time__gt=timezone.now()).count(),  # Hali tugamagan e'lonlari
+        'total_auctions': my_products.count(),
+        'active_auctions': my_products.filter(end_time__gt=now).count(),
         'total_bids_received': Bid.objects.filter(product__owner=request.user).count(),
-        # Uning mahsulotlariga kelgan takliflar soni
-        'won_count': won_products.count(),  # Yutib olganlari soni
+        'won_count': won_products.count(),
     }
 
     context = {
