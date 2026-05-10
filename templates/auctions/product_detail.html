@@ -73,9 +73,43 @@
             {% if not is_finished %}
                 {% if product.owner == request.user %}
                     <div class="alert alert-warning border-0 shadow-sm mb-4">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        Siz ushbu e'lon egasisiz. O'z mahsulotingizga narx ura olmaysiz.
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="bi bi-info-circle-fill me-2"></i> Siz ushbu e'lon egasisiz.</span>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'product_update' product.pk %}" class="btn btn-sm btn-outline-dark fw-bold shadow-sm">
+                                    <i class="bi bi-pencil-square"></i> Tahrirlash
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <i class="bi bi-trash"></i> O'chirish
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted text-dark d-block border-top pt-2 mt-2">O'z mahsulotingizga narx ura olmaysiz.</small>
                     </div>
+
+                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow-lg">
+                                <div class="modal-header bg-danger text-white border-0">
+                                    <h5 class="modal-title fw-bold" id="deleteModalLabel">E'lonni o'chirish</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center p-4">
+                                    <i class="bi bi-exclamation-octagon text-danger fs-1 mb-3"></i>
+                                    <p class="fs-5 mb-0">Haqiqatdan ham ushbu e'lonni butunlay o'chirib tashlamoqchimisiz?</p>
+                                    <p class="text-muted small mt-2">Ushbu amalni ortga qaytarib bo'lmaydi.</p>
+                                </div>
+                                <div class="modal-footer border-0 justify-content-center pb-4">
+                                    <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">Bekor qilish</button>
+                                    <form action="{% url 'product_delete' product.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger px-4 fw-bold">Ha, o'chirilsin</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 {% else %}
                     <form id="bid-form" method="POST" class="card p-3 shadow-sm border-0 mb-4 bg-white">
                         {% csrf_token %}
@@ -101,6 +135,7 @@
     </div>
 
     <hr class="my-5">
+
     <div class="row mb-5">
         <div class="col-md-12">
             <h3 class="mb-4 fw-bold"><i class="bi bi-list-ol text-success"></i> Takliflar tarixi</h3>

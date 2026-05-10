@@ -1,19 +1,31 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-5">
     <div class="col-md-8">
         <div class="card shadow p-4 border-0">
-            <h2 class="mb-4 text-center fw-bold text-success">Yangi mahsulot joylash</h2>
-            <form method="POST" enctype="multipart/form-data"> {% csrf_token %}
+            <h2 class="mb-4 text-center fw-bold text-success">
+                {% if is_edit %}Mahsulotni tahrirlash{% else %}Yangi mahsulot joylash{% endif %}
+            </h2>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
                 <div class="mb-3">
                     <label class="form-label fw-bold">Mahsulot nomi</label>
                     {{ form.title }}
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Kategoriya</label>
+                    {{ form.category }}
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-bold">Tavsifi</label>
                     {{ form.description }}
                 </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Boshlang'ich narx (so'm)</label>
@@ -24,13 +36,45 @@
                         {{ form.end_time }}
                     </div>
                 </div>
+
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Mahsulot rasmi</label>
+                    <label class="form-label fw-bold">Asosiy rasm (Muqova)</label>
                     {{ form.image }}
                 </div>
-                <button type="submit" class="btn btn-success w-100 btn-lg shadow">Auksionni boshlash</button>
+
+                <hr class="my-4">
+
+                <h4 class="mb-3 fw-bold text-primary">Qo'shimcha rasmlar (Ixtiyoriy)</h4>
+
+                {{ formset.management_form }}
+                <div class="row">
+                    {% for image_form in formset %}
+                        <div class="col-md-4 mb-3 text-center">
+                            <div class="p-2 border rounded bg-light">
+                                {{ image_form.image }}
+                                {% if image_form.instance.pk %}
+                                    <div class="mt-2 text-danger">
+                                        {{ image_form.DELETE }} O'chirish
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 btn-lg shadow mt-3">
+                    {% if is_edit %}O'zgarishlarni saqlash{% else %}Auksionni boshlash{% endif %}
+                </button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    document.querySelectorAll('input, select, textarea').forEach(function(el) {
+        if (el.type !== 'checkbox') {
+            el.classList.add('form-control');
+        }
+    });
+</script>
 {% endblock %}

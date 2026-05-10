@@ -1,0 +1,27 @@
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="mb-0 fw-bold text-success">
+            <i class="bi bi-chat-dots me-2"></i> So'nggi bildirishnomalar
+        </h5>
+    </div>
+    <div class="list-group list-group-flush">
+        {% for note in notifications %}
+            <div class="list-group-item list-group-item-action border-0 mb-1 rounded-3 mx-2 {% if not note.is_read %}bg-light{% endif %}">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <p class="mb-1 text-dark">{{ note.message }}</p>
+                    <small class="text-muted">{{ note.created_at|timesince }} avval</small>
+                </div>
+                {% if note.link %}
+                    <a href="{{ note.link }}" class="btn btn-sm btn-link p-0 text-success text-decoration-none">
+                        Batafsil ko'rish <i class="bi bi-arrow-right small"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="p-4 text-center">
+                <i class="bi bi-bell-slash text-muted fs-2"></i>
+                <p class="text-muted mt-2">Hozircha yangi xabarlar yo'q.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>

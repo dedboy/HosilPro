@@ -2,34 +2,30 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import Product, Bid, Category
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Count
+from .models import Product, Bid, Category, Notification  # Notification borligiga ishonch hosil qiling
+from .forms import ProductForm, ProductImageFormSet
 
+# 1. MAHSULOTLAR RO'YXATI
 def product_list(request):
-    """Asosiy sahifa - mahsulotlar ro'yxati va qidiruv"""
     products = Product.objects.filter(is_active=True).order_by('-created_at')
-
     query = request.GET.get('search')
     category_id = request.GET.get('category')
 
     if query:
-        products = products.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        )
-
+        products = products.filter(Q(title__icontains=query) | Q(description__icontains=query))
     if category_id:
         products = products.filter(category_id=category_id)
 
-    # DIQQAT: Bu yerda 'now' qo'shildi!
     return render(request, 'auctions/product_list.html', {
         'products': products,
         'categories': Category.objects.all(),
-        'now': timezone.now()  # HTMLdagi vaqtni solishtirish uchun shart!
+        'now': timezone.now()
     })
 
-
+# 2. BATAFSIL SAHIFA + BILDIRISHNOMALAR LOGIKASI
 def product_detail(request, pk):
-    """Mahsulot haqida to'liq ma'lumot va narx urish mantiqi"""
     product = get_object_or_404(Product, pk=pk)
     is_finished = product.is_finished()
     winner = product.determine_winner()
@@ -49,9 +45,31 @@ def product_detail(request, pk):
             try:
                 amount = float(amount)
                 if amount > product.get_current_price():
+                    # Eski eng baland narx bergan odamni saqlab qolamiz
+                    old_highest_bid = product.bids.order_by('-amount').first()
+
+                    # Yangi taklifni yaratish
                     Bid.objects.create(product=product, user=request.user, amount=amount)
                     product.current_price = amount
                     product.save()
+
+                    # --- BILDIRISHNOMALAR ---
+                    # A. E'lon egasiga xabar yuborish
+                    if product.owner != request.user:
+                        Notification.objects.create(
+                            recipient=product.owner,
+                            message=f"Sizning '{product.title}' mahsulotingizga yangi narx taklif qilindi: {amount} so'm",
+                            link=f"/product/{product.pk}/"
+                        )
+
+                    # B. Avvalgi narx urgan odamga "Sizdan o'zishdi" deb xabar yuborish
+                    if old_highest_bid and old_highest_bid.user != request.user:
+                        Notification.objects.create(
+                            recipient=old_highest_bid.user,
+                            message=f"'{product.title}' auksionida sizning taklifingiz mag'lub etildi! Yangi narx: {amount} so'm",
+                            link=f"/product/{product.pk}/"
+                        )
+
                     messages.success(request, "Sizning taklifingiz qabul qilindi!")
                 else:
                     messages.error(request, "Taklif joriy narxdan yuqori bo'lishi kerak!")
@@ -68,38 +86,113 @@ def product_detail(request, pk):
         'now': timezone.now()
     })
 
-
+# 3. MAHSULOT QO'SHISH
 @login_required
 def product_create(request):
-    """Yangi e'lon qo'shish"""
-    from .forms import ProductCreateForm
+    if not request.user.is_farmer:
+        messages.error(request, "Mahsulot qo'shish uchun 'Farmer' profili kerak!")
+        return redirect('product_list')
+
     if request.method == 'POST':
-        form = ProductCreateForm(request.POST, request.FILES)
-        if form.is_valid():
+        form = ProductForm(request.POST, request.FILES)
+        formset = ProductImageFormSet(request.POST, request.FILES)
+        if form.is_valid() and formset.is_valid():
             product = form.save(commit=False)
             product.owner = request.user
             product.save()
-            messages.success(request, "Mahsulot auksionga qo'yildi!")
+            formset.instance = product
+            formset.save()
+            messages.success(request, "Mahsulot muvaffaqiyatli auksionga qo'yildi!")
             return redirect('product_list')
     else:
-        form = ProductCreateForm()
-    return render(request, 'auctions/product_form.html', {'form': form})
+        form = ProductForm()
+        formset = ProductImageFormSet()
+    return render(request, 'auctions/product_form.html', {'form': form, 'formset': formset})
+
+# 4. TAHRIRLASH
+@login_required
+def product_update(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if product.owner != request.user:
+        raise PermissionDenied
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        formset = ProductImageFormSet(request.POST, request.FILES, instance=product)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "Ma'lumotlar yangilandi!")
+            return redirect('product_detail', pk=product.pk)
+    else:
+        form = ProductForm(instance=product)
+        formset = ProductImageFormSet(instance=product)
+    return render(request, 'auctions/product_form.html', {'form': form, 'formset': formset, 'is_edit': True})
+
+# 5. O'CHIRISH
+@login_required
+def product_delete(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if product.owner != request.user:
+        raise PermissionDenied
+    if request.method == 'POST':
+        product.delete()
+        messages.success(request, "Mahsulot o'chirildi.")
+    return redirect('product_list')
+
+# 6. FOYDALANUVCHI PROFILI
+@login_required
+def profile_view(request):
+    # MAJBURIY YANGILASH: Profil ochilishi bilan hammasini True qilamiz
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+
+    # Keyin ma'lumotlarni bazadan tortamiz
+    my_products = Product.objects.filter(owner=request.user).order_by('-created_at')
+    my_bids = Bid.objects.filter(user=request.user).select_related('product')
+    won_auctions = Product.objects.filter(winner=request.user)
+    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')[:10]
+
+    return render(request, 'auctions/profile.html', {
+        'my_products': my_products,
+        'my_bids': my_bids,
+        'won_auctions': won_auctions,
+        'notifications': notifications,
+    })
+
+# 7. KATEGORIYALAR
+def category_list(request):
+    categories = Category.objects.annotate(product_count=Count('product'))
+    return render(request, 'auctions/category_list.html', {'categories': categories})
 
 
 @login_required
 def my_bids(request):
-    """Foydalanuvchi ishtirok etayotgan auksionlar"""
+    """Foydalanuvchi taklif bergan mahsulotlar ro'yxati"""
     user_bids = Bid.objects.filter(user=request.user).select_related('product')
-    products_ids = user_bids.values_list('product_id', flat=True).distinct()
-    products = Product.objects.filter(id__in=products_ids)
+    # Faqat taklif berilgan mahsulotlarni bir marta (distinct) olish
+    product_ids = user_bids.values_list('product_id', flat=True).distinct()
+    products = Product.objects.filter(id__in=product_ids)
 
     return render(request, 'auctions/my_bids.html', {
         'products': products,
-        'now': timezone.now()  # Bu yerda ham kerak bo'lishi mumkin
+        'now': timezone.now()
     })
 
 
-def category_list(request):
-    """Barcha kategoriyalar ro'yxati"""
-    categories = Category.objects.annotate(product_count=Count('product'))
-    return render(request, 'auctions/category_list.html', {'categories': categories})
+@login_required
+def mark_all_as_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+
+    # Foydalanuvchi qaysi sahifada turgan bo'lsa, o'sha yerga qaytarish
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('product_list')
+
+
+@login_required
+def mark_all_as_read(request):
+    """Xabarlarni o'qildi deb belgilab, orqaga qaytaradi"""
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+
+    # Kelgan sahifasiga qaytarish, agar iloji bo'lmasa asosiy sahifaga
+    return redirect(request.META.get('HTTP_REFERER', 'product_list'))
