@@ -1,4 +1,6 @@
-"venv/"  "*.pyc"  "db.sqlite3"  "__pycache__/" ".env"
-".env" 
-".env" 
-"media/" 
+venv/
+*.pyc
+db.sqlite3
+__pycache__/
+.env
+media/
