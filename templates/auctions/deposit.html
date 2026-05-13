@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 p-4" style="border-radius: 20px;">
+            <div class="text-center mb-4">
+                <div class="bg-success bg-opacity-10 d-inline-block p-3 rounded-circle mb-3">
+                    <i class="bi bi-cash-stack fs-1 text-success"></i>
+                </div>
+                <h3 class="fw-bold">Balansni to'ldirish</h3>
+                <p class="text-muted small">Summani kiriting va to'lov usulini tanlang</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">To'lov miqdori (so'm)</label>
+                    <div class="input-group input-group-lg">
+                        <input type="number" name="amount" class="form-control fw-bold border-success" placeholder="0.00" min="1000" required>
+                        <span class="input-group-text bg-success text-white border-success">so'm</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">To'lov usuli</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="method" id="payme" checked>
+                            <label class="btn btn-outline-primary w-100 p-3" for="payme">
+                                <span class="fw-bold">Payme</span>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="method" id="click">
+                            <label class="btn btn-outline-info w-100 p-3" for="click">
+                                <span class="fw-bold">Click</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 shadow-sm fw-bold">
+                    DAVOM ETISH <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+            </form>
+            
+            <a href="{% url 'profile' %}" class="btn btn-link text-muted mt-3 text-decoration-none">
+                <i class="bi bi-chevron-left"></i> Orqaga qaytish
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

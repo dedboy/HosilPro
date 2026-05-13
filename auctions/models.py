@@ -2,11 +2,61 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+# --- HAMYON TIZIMI MODELLARI ---
+
+class Wallet(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='wallet'
+    )
+    balance = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Joriy balans"
+    )
+    frozen_balance = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Muzlatilgan summa"
+    )
+
+    def __str__(self):
+        return f"{self.user.username} hamyoni - {self.balance} so'm"
+
+    def get_available_balance(self):
+        """Ishlatish mumkin bo'lgan sof balans"""
+        return self.balance - self.frozen_balance
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = (
+        ('deposit', 'Pul tushirish'),
+        ('withdraw', 'Pul yechish'),
+        ('payment', 'To\'lov'),
+        ('hold', 'Bloklash (Auksion uchun)'),
+        ('refund', 'Qaytarish'),
+    )
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.wallet.user.username} - {self.transaction_type} - {self.amount}"
+
+# --- AUKSION TIZIMI MODELLARI ---
 
 class Notification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     message = models.TextField()
-    link = models.CharField(max_length=255, blank=True, null=True) # Bildirishnoma bosilganda qayerga o'tishi
+    link = models.CharField(max_length=255, blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -59,13 +109,10 @@ class Product(models.Model):
         return self.current_price if self.current_price else self.start_price
 
     def is_finished(self):
-        """Auksion vaqti tugaganligini tekshiradi"""
         return timezone.now() > self.end_time
 
     def determine_winner(self):
-        """G'olibni aniqlash funksiyasi"""
         if self.is_finished() and not self.winner:
-            # Eng baland narx bergan bidni oladi
             highest_bid = self.bids.order_by('-amount').first()
             if highest_bid:
                 self.winner = highest_bid.user
@@ -90,3 +137,17 @@ class Bid(models.Model):
 
     class Meta:
         ordering = ['-amount']
+
+# --- SIGNALLAR (Avtomatik Hamyon yaratish uchun) ---
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_wallet(sender, instance, created, **kwargs):
+    """Yangi user yaratilganda unga Wallet qo'shib qo'yadi"""
+    if created:
+        Wallet.objects.create(user=instance)
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_wallet(sender, instance, **kwargs):
+    """User profilidagi o'zgarishda Walletni ham saqlaydi"""
+    if hasattr(instance, 'wallet'):
+        instance.wallet.save()

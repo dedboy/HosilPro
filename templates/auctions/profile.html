@@ -1,27 +1,78 @@
-<div class="card border-0 shadow-sm mt-4">
-    <div class="card-header bg-white py-3 border-0">
-        <h5 class="mb-0 fw-bold text-success">
-            <i class="bi bi-chat-dots me-2"></i> So'nggi bildirishnomalar
-        </h5>
-    </div>
-    <div class="list-group list-group-flush">
-        {% for note in notifications %}
-            <div class="list-group-item list-group-item-action border-0 mb-1 rounded-3 mx-2 {% if not note.is_read %}bg-light{% endif %}">
-                <div class="d-flex w-100 justify-content-between align-items-center">
-                    <p class="mb-1 text-dark">{{ note.message }}</p>
-                    <small class="text-muted">{{ note.created_at|timesince }} avval</small>
+<!-- Hamyon va Bildirishnomalar bloki -->
+<div class="row">
+    <!-- Chap tomon: Hamyon ko'rinishi -->
+    <div class="col-md-5 mb-4">
+        <div class="card shadow-sm border-0 text-white h-100"
+             style="background: linear-gradient(135deg, #198754 0%, #146c43 100%); border-radius: 15px;">
+            <div class="card-body p-4 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <p class="text-uppercase small mb-1 opacity-75 fw-bold">Sizning balansingiz</p>
+                        <i class="bi bi-wallet2 fs-1 opacity-25"></i>
+                    </div>
+                    <!-- DIQQAT: user.wallet.balance o'rniga wallet.balance -->
+                    <h2 class="display-6 fw-bold mb-0">{{ wallet.balance }} <small class="fs-4">so'm</small></h2>
+
+                    {% if wallet.frozen_balance > 0 %}
+                        <div class="mt-3 p-2 bg-white bg-opacity-10 rounded border border-white border-opacity-10">
+                            <small class="d-block fw-bold text-warning">
+                                <i class="bi bi-lock-fill"></i> Muzlatilgan: {{ wallet.frozen_balance }} so'm
+                            </small>
+                            <small class="opacity-75" style="font-size: 0.75rem;">Ushbu summa auksiondagi takliflaringiz
+                                uchun vaqtincha band qilingan.</small>
+                        </div>
+                    {% endif %}
                 </div>
-                {% if note.link %}
-                    <a href="{{ note.link }}" class="btn btn-sm btn-link p-0 text-success text-decoration-none">
-                        Batafsil ko'rish <i class="bi bi-arrow-right small"></i>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{% url 'deposit_view' %}" class="btn btn-success flex-grow-1">
+                        <i class="bi bi-plus-circle me-1"></i> To'ldirish
                     </a>
-                {% endif %}
+                    <a href="{% url 'withdraw_view' %}" class="btn btn-outline-light flex-grow-1">
+                        <i class="bi bi-box-arrow-up me-1"></i> Yechish
+                    </a>
+                </div>
             </div>
-        {% empty %}
-            <div class="p-4 text-center">
-                <i class="bi bi-bell-slash text-muted fs-2"></i>
-                <p class="text-muted mt-2">Hozircha yangi xabarlar yo'q.</p>
+        </div>
+    </div>
+
+    <!-- O'ng tomon: Bildirishnomalar -->
+    <div class="col-md-7 mb-4">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 15px;">
+            <div class="card-header bg-white py-3 border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-success">
+                        <i class="bi bi-chat-dots me-2"></i> Bildirishnomalar
+                    </h5>
+                    {% if unread_count > 0 %}
+                        <a href="{% url 'mark_all_read' %}" class="btn btn-sm btn-outline-success border-0">Hammasini
+                            o'qish</a>
+                    {% endif %}
+                </div>
             </div>
-        {% endfor %}
+            <div class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
+                {% for note in notifications %}
+                    <div class="list-group-item list-group-item-action border-0 mb-2 rounded-3 mx-2 {% if not note.is_read %}bg-light border-start border-success border-4{% endif %}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <p class="mb-1 text-dark small fw-medium">{{ note.message }}</p>
+                            <small class="text-muted" style="font-size: 0.7rem;">{{ note.created_at|timesince }}
+                                avval</small>
+                        </div>
+                        {% if note.link %}
+                            <a href="{{ note.link }}"
+                               class="btn btn-sm btn-link p-0 text-success text-decoration-none x-small"
+                               style="font-size: 0.8rem;">
+                                Batafsil ko'rish <i class="bi bi-arrow-right small"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="p-5 text-center">
+                        <i class="bi bi-bell-slash text-muted fs-2"></i>
+                        <p class="text-muted mt-2">Hozircha yangi xabarlar yo'q.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>

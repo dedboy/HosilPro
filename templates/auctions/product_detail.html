@@ -1,23 +1,43 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="mb-3">
-        <a href="{% url 'product_list' %}" class="btn btn-link text-success p-0 text-decoration-none fw-bold">
-            <i class="bi bi-arrow-left"></i> Orqaga qaytish
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            {% if product.image %}
-                <img src="{{ product.image.url }}" class="img-fluid rounded shadow-lg border" alt="{{ product.title }}" style="width: 100%; max-height: 500px; object-fit: cover;">
-            {% else %}
-                <div class="bg-light d-flex align-items-center justify-content-center rounded shadow-sm" style="height: 400px;">
-                    <span class="text-muted"><i class="bi bi-image fs-1"></i><br>Rasm mavjud emas</span>
-                </div>
-            {% endif %}
+    <div class="container mt-4">
+        <div class="mb-3">
+            <a href="{% url 'product_list' %}" class="btn btn-link text-success p-0 text-decoration-none fw-bold">
+                <i class="bi bi-arrow-left"></i> Orqaga qaytish
+            </a>
         </div>
+
+        <!-- Asosiy rasm -->
+        <div class="main-image mb-3">
+            <a href="{{ product.image.url }}" data-fancybox="gallery" data-caption="Asosiy rasm">
+                <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm w-100" alt="{{ product.title }}"
+                     style="max-height: 400px; object-fit: cover;">
+            </a>
+        </div>
+
+        <!-- Qo'shimcha rasmlar (Gallery) -->
+        {% if product.images.all %}
+            <div class="row g-2">
+                <h6 class="fw-bold mt-2 text-muted">Barcha rasmlar:</h6>
+                {% for img in product.images.all %}
+                    <div class="col-3">
+                        <a href="{{ img.image.url }}" data-fancybox="gallery" data-caption="{{ product.title }} - rasm">
+                            <img src="{{ img.image.url }}" class="img-thumbnail"
+                                 style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Fancybox JS (Faylning eng oxiriga, scriptlar qismiga qo'shing) -->
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+        <script>
+            Fancybox.bind("[data-fancybox]", {
+                // Galereya sozlamalari
+            });
+        </script>
 
         <div class="col-md-6">
             <div class="d-flex justify-content-between align-items-start">
@@ -26,7 +46,8 @@
                     <span class="badge bg-success-subtle text-success px-3">{{ product.category.name }}</span>
                 </div>
                 {% if product.owner == request.user %}
-                    <span class="badge bg-warning text-dark p-2"><i class="bi bi-person-badge"></i> SIZNING E'LONINGIZ</span>
+                    <span class="badge bg-warning text-dark p-2"><i
+                            class="bi bi-person-badge"></i> SIZNING E'LONINGIZ</span>
                 {% endif %}
             </div>
             <hr>
@@ -38,7 +59,8 @@
                 </div>
             </div>
 
-            <div id="status-box" class="alert {% if is_finished %}alert-danger{% else %}alert-info{% endif %} d-flex align-items-center mb-4">
+            <div id="status-box"
+                 class="alert {% if is_finished %}alert-danger{% else %}alert-info{% endif %} d-flex align-items-center mb-4">
                 <i class="bi bi-clock-history me-2"></i>
                 <strong>Holati: </strong>&nbsp;<span id="countdown">Hisoblanmoqda...</span>
             </div>
@@ -54,19 +76,28 @@
                                     <h6 class="fw-bold mb-2 text-uppercase small text-muted">Bog'lanish uchun:</h6>
                                     {% if product.owner == request.user %}
                                         <p class="mb-1"><strong>Xaridor:</strong> {{ winner.username }}</p>
-                                        <p class="mb-0"><strong>Tel:</strong> <a href="tel:{{ winner.phone_number }}" class="text-decoration-none fw-bold text-success">{{ winner.phone_number }}</a></p>
+                                        <p class="mb-0"><strong>Tel:</strong> <a href="tel:{{ winner.phone_number }}"
+                                                                                 class="text-decoration-none fw-bold text-success">{{ winner.phone_number }}</a>
+                                        </p>
                                     {% else %}
-                                        <p class="mb-1"><strong>Sotuvchi (Fermer):</strong> {{ product.owner.username }}</p>
-                                        <p class="mb-0"><strong>Tel:</strong> <a href="tel:{{ product.owner.phone_number }}" class="text-decoration-none fw-bold text-success">{{ product.owner.phone_number }}</a></p>
+                                        <p class="mb-1"><strong>Sotuvchi (Fermer):</strong> {{ product.owner.username }}
+                                        </p>
+                                        <p class="mb-0"><strong>Tel:</strong> <a
+                                                href="tel:{{ product.owner.phone_number }}"
+                                                class="text-decoration-none fw-bold text-success">{{ product.owner.phone_number }}</a>
+                                        </p>
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <p class="mb-0 text-white-50 small"><i>Aloqa ma'lumotlari faqat sotuvchi va g'olibga ko'rinadi.</i></p>
+                                <p class="mb-0 text-white-50 small"><i>Aloqa ma'lumotlari faqat sotuvchi va g'olibga
+                                    ko'rinadi.</i></p>
                             {% endif %}
                         </div>
                     </div>
                 {% else %}
-                    <div class="alert alert-warning text-center border-0 shadow-sm">Auksion tugadi, lekin hech kim taklif bermadi.</div>
+                    <div class="alert alert-warning text-center border-0 shadow-sm">Auksion tugadi, lekin hech kim
+                        taklif bermadi.
+                    </div>
                 {% endif %}
             {% endif %}
 
@@ -76,34 +107,43 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span><i class="bi bi-info-circle-fill me-2"></i> Siz ushbu e'lon egasisiz.</span>
                             <div class="d-flex gap-2">
-                                <a href="{% url 'product_update' product.pk %}" class="btn btn-sm btn-outline-dark fw-bold shadow-sm">
+                                <a href="{% url 'product_update' product.pk %}"
+                                   class="btn btn-sm btn-outline-dark fw-bold shadow-sm">
                                     <i class="bi bi-pencil-square"></i> Tahrirlash
                                 </a>
-                                <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal">
                                     <i class="bi bi-trash"></i> O'chirish
                                 </button>
                             </div>
                         </div>
-                        <small class="text-muted text-dark d-block border-top pt-2 mt-2">O'z mahsulotingizga narx ura olmaysiz.</small>
+                        <small class="text-muted text-dark d-block border-top pt-2 mt-2">O'z mahsulotingizga narx ura
+                            olmaysiz.</small>
                     </div>
 
-                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel"
+                         aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow-lg">
                                 <div class="modal-header bg-danger text-white border-0">
                                     <h5 class="modal-title fw-bold" id="deleteModalLabel">E'lonni o'chirish</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body text-center p-4">
                                     <i class="bi bi-exclamation-octagon text-danger fs-1 mb-3"></i>
-                                    <p class="fs-5 mb-0">Haqiqatdan ham ushbu e'lonni butunlay o'chirib tashlamoqchimisiz?</p>
+                                    <p class="fs-5 mb-0">Haqiqatdan ham ushbu e'lonni butunlay o'chirib
+                                        tashlamoqchimisiz?</p>
                                     <p class="text-muted small mt-2">Ushbu amalni ortga qaytarib bo'lmaydi.</p>
                                 </div>
                                 <div class="modal-footer border-0 justify-content-center pb-4">
-                                    <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">Bekor qilish</button>
+                                    <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">
+                                        Bekor qilish
+                                    </button>
                                     <form action="{% url 'product_delete' product.pk %}" method="POST">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-danger px-4 fw-bold">Ha, o'chirilsin</button>
+                                        <button type="submit" class="btn btn-danger px-4 fw-bold">Ha, o'chirilsin
+                                        </button>
                                     </form>
                                 </div>
                             </div>
@@ -115,11 +155,13 @@
                         {% csrf_token %}
                         <label class="form-label fw-bold">Sizning taklifingiz:</label>
                         <div class="input-group input-group-lg">
-                            <input type="number" name="bid_amount" class="form-control" placeholder="Summani kiriting" required min="{{ product.get_current_price|add:1 }}">
+                            <input type="number" name="bid_amount" class="form-control" placeholder="Summani kiriting"
+                                   required min="{{ product.get_current_price|add:1 }}">
                             <button class="btn btn-success px-4" type="submit">Taklif yuborish</button>
                         </div>
                         <div class="form-text text-muted mt-2">
-                            * Minimal taklif: <strong class="text-success">{{ product.get_current_price }}</strong> so'mdan yuqori bo'lishi kerak.
+                            * Minimal taklif: <strong class="text-success">{{ product.get_current_price }}</strong>
+                            so'mdan yuqori bo'lishi kerak.
                         </div>
                     </form>
                 {% endif %}
@@ -143,66 +185,67 @@
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Foydalanuvchi</th>
-                                <th>Taklif miqdori</th>
-                                <th>Vaqti</th>
-                            </tr>
+                        <tr>
+                            <th class="ps-4">Foydalanuvchi</th>
+                            <th>Taklif miqdori</th>
+                            <th>Vaqti</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            {% for bid in bids %}
-                                <tr {% if forloop.first %}class="table-warning fw-bold"{% endif %}>
-                                    <td class="ps-4">
-                                        {% if forloop.first and is_finished %}👑 {% elif forloop.first %}🚀 {% endif %}
-                                        {{ bid.user.username }}
-                                        {% if bid.user == request.user %}<span class="badge bg-secondary ms-1">Siz</span>{% endif %}
-                                    </td>
-                                    <td class="text-success">{{ bid.amount }} so'm</td>
-                                    <td class="text-muted small">{{ bid.created_at|date:"H:i | d.m.Y" }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="3" class="text-center py-5 text-muted">
-                                        Hozircha hech qanday taklif yo'q.
-                                    </td>
-                                </tr>
-                            {% endfor %}
+                        {% for bid in bids %}
+                            <tr {% if forloop.first %}class="table-warning fw-bold"{% endif %}>
+                                <td class="ps-4">
+                                    {% if forloop.first and is_finished %}👑 {% elif forloop.first %}🚀 {% endif %}
+                                    {{ bid.user.username }}
+                                    {% if bid.user == request.user %}
+                                        <span class="badge bg-secondary ms-1">Siz</span>{% endif %}
+                                </td>
+                                <td class="text-success">{{ bid.amount }} so'm</td>
+                                <td class="text-muted small">{{ bid.created_at|date:"H:i | d.m.Y" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted">
+                                    Hozircha hech qanday taklif yo'q.
+                                </td>
+                            </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-</div>
+    </div>
 
-<script>
-    function updateTimer() {
-        const endTime = new Date("{{ product.end_time|date:'Y/m/d H:i:s' }}").getTime();
-        const now = new Date().getTime();
-        const distance = endTime - now;
+    <script>
+        function updateTimer() {
+            const endTime = new Date("{{ product.end_time|date:'Y/m/d H:i:s' }}").getTime();
+            const now = new Date().getTime();
+            const distance = endTime - now;
 
-        const countdownElement = document.getElementById("countdown");
-        const bidForm = document.getElementById("bid-form");
-        const statusBox = document.getElementById("status-box");
+            const countdownElement = document.getElementById("countdown");
+            const bidForm = document.getElementById("bid-form");
+            const statusBox = document.getElementById("status-box");
 
-        if (distance < 0) {
-            clearInterval(x);
-            countdownElement.innerHTML = "<strong>AUKSION TUGADI</strong>";
-            statusBox.classList.remove('alert-info');
-            statusBox.classList.add('alert-danger');
-            if (bidForm) bidForm.remove();
-            return;
+            if (distance < 0) {
+                clearInterval(x);
+                countdownElement.innerHTML = "<strong>AUKSION TUGADI</strong>";
+                statusBox.classList.remove('alert-info');
+                statusBox.classList.add('alert-danger');
+                if (bidForm) bidForm.remove();
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdownElement.innerHTML = (days > 0 ? days + "k " : "") + hours + "s " + minutes + "m " + seconds + "s ";
         }
 
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        countdownElement.innerHTML = (days > 0 ? days + "k " : "") + hours + "s " + minutes + "m " + seconds + "s ";
-    }
-
-    const x = setInterval(updateTimer, 1000);
-    updateTimer();
-</script>
+        const x = setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
 {% endblock %}

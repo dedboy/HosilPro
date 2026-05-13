@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
 
     <style>
         body {
@@ -23,145 +24,201 @@
             letter-spacing: -1px;
         }
 
+        /* Linklar markazda bo'lishi uchun */
         .nav-link {
             font-weight: 500;
+            font-size: 14.5px;
+            color: rgba(255, 255, 255, 0.7) !important;
             transition: 0.3s;
-            position: relative;
         }
 
         .nav-link:hover {
-            color: #ffc107 !important;
+            color: #ffffff !important;
+        }
+
+        /* image_2d1791.jpg dagi siqilishni oldini olish uchun */
+        .navbar-collapse {
+            flex-grow: 1;
+        }
+
+        /* Hamyon blokini ixcham qilish */
+        .balance-nav-card {
+            padding: 6px 12px !important; /* Ichki bo'shliqni kamaytirish */
+            min-width: 140px;
+            height: fit-content;
+            align-self: center; /* Navbarda o'rtada turishi uchun */
+        }
+
+        .balance-nav-card .balance-label {
+            font-size: 0.65rem !important; /* "BALANS" yozuvini kichraytirish */
+            margin-bottom: 0 !important;
+        }
+
+        .balance-nav-card .balance-amount {
+            font-size: 0.9rem !important; /* Summani moslashtirish */
+            line-height: 1.2;
         }
 
         .btn-warning {
             font-weight: 700;
-            color: #000;
             border-radius: 8px;
-        }
-
-        .alert {
-            border-radius: 12px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            background-color: #ffc107;
             border: none;
         }
 
-        /* Bildirishnoma qizil nuqtasi stili */
-        .notification-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            padding: 0.35em 0.5em;
-            font-size: 0.6rem;
-            border: 2px solid #198754; /* Navbar foni bilan bir xil */
-        }
-
-        .navbar-toggler {
-            border: none;
-        }
-
-        .navbar-toggler:focus {
-            box-shadow: none;
+        .profile-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
         }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top mb-4">
+<nav class="navbar navbar-expand-lg sticky-top py-3">
     <div class="container">
-        <a class="navbar-brand fs-2" href="{% url 'product_list' %}">
-            <i class="bi bi-leaf-fill text-warning"></i> HOSIL<span class="text-warning">PRO</span>
+        <!-- Logo -->
+        <a class="navbar-brand text-white fs-4 me-4" href="{% url 'product_list' %}">
+            HOSIL<span style="color: #ffc107;">PRO</span>
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#auctionNavbar">
-            <span class="navbar-toggler-icon"></span>
+        <!-- Burger Menu (Mobile) -->
+        <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#mobileMenu">
+            <i class="bi bi-list fs-1"></i>
         </button>
 
-        <div class="collapse navbar-collapse" id="auctionNavbar">
-            <ul class="navbar-nav ms-auto align-items-center">
-                <li class="nav-item">
-                    <a class="nav-link text-white px-3" href="{% url 'product_list' %}">
-                        <i class="bi bi-house-door"></i> Asosiy
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link text-white px-3" href="{% url 'category_list' %}">
-                        <i class="bi bi-grid-3x3-gap"></i> Kategoriyalar
-                    </a>
-                </li>
-
-                {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link text-white px-3" href="{% url 'my_bids' %}">
-                        <i class="bi bi-hammer"></i> Ishtirokim
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link text-white px-3 position-relative" href="{% url 'mark_all_read' %}"
-                       title="Xabarlarni o'qildi qilish">
-                        <i class="bi bi-bell fs-5"></i>
-                        {% if unread_count > 0 %}
-                        <span class="badge rounded-pill bg-danger notification-badge">
-                {{ unread_count }}
-            </span>
-                        {% endif %}
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link text-white px-3" href="{% url 'profile' %}">
-                        <i class="bi bi-person-circle"></i> Profilim
-                    </a>
-                </li>
-
-                <li class="nav-item ms-lg-3 mt-2 mt-lg-0 w-100 w-lg-auto">
-                    <a class="btn btn-warning px-4 shadow-sm w-100" href="{% url 'product_create' %}">
-                        <i class="bi bi-plus-lg"></i> E'LON BERISH
-                    </a>
-                </li>
-
-                <li class="nav-item mt-2 mt-lg-0">
-                    <form action="{% url 'logout' %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-link nav-link text-white-50 border-0 ms-lg-2">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </button>
-                    </form>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-link text-white px-3" href="{% url 'login' %}">Kirish</a>
-                </li>
-                <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
-                    <a class="btn btn-outline-light px-4 w-100" href="{% url 'register' %}">Ro'yxatdan o'tish</a>
-                </li>
-                {% endif %}
+        <!-- Desktop Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link px-3" href="{% url 'product_list' %}">Asosiy</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="{% url 'category_list' %}">Kategoriyalar</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="{% url 'my_bids' %}">Ishtirokim</a></li>
             </ul>
+
+            <!-- O'ng tomon: Balans va Profil -->
+
+            <div class="d-flex align-items-center gap-3">
+                {% if user.is_authenticated %}
+                    <!-- image_2b54bf.png dagi balans bloki uchun -->
+                    <a href="{% url 'deposit_view' %}" class="text-decoration-none ms-lg-3">
+                        <div class="d-flex flex-column justify-content-center px-3 py-1 rounded-3"
+                             style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); min-height: 45px;">
+                            <span style="font-size: 10px; color: rgba(255, 255, 255, 0.6); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1;">Balans</span>
+                            <div class="text-white fw-bold" style="font-size: 14px; line-height: 1.2;">
+                                {% if wallet %}
+                                    {{ wallet.balance|floatformat:"0" }}
+                                    <small style="font-size: 11px; opacity: 0.8;">so'm</small>
+                                {% else %}
+                                    0 <small style="font-size: 11px; opacity: 0.8;">so'm</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    <div class="dropdown">
+                        <a class="p-0 border-0" href="#" data-bs-toggle="dropdown">
+                            <div class="profile-icon"><i class="bi bi-person fs-5"></i></div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="border-radius: 12px;">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">Profilim</a></li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <!-- Profilim dan keyin qo'shing -->
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{% url 'withdraw_view' %}">
+                                    <i class="bi bi-cash-stack me-2"></i> Mablag'ni yechish
+                                </a>
+                            </li>
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" class="m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">Chiqish</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <a href="{% url 'product_create' %}" class="btn btn-warning px-4">+ E'LON</a>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container py-2">
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
-        <i class="bi {% if message.tags == 'success' %}bi-check-circle{% else %}bi-exclamation-triangle{% endif %} me-2"></i>
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!-- MOBILE MENU (OFFCANVAS) -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu" style="background-color: #198754; width: 280px;">
+    <div class="offcanvas-header border-bottom border-white border-opacity-10 py-4">
+        <h5 class="offcanvas-title text-white fw-bold">HOSIL<span class="text-warning">PRO</span></h5>
+        <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas"></button>
     </div>
-    {% endfor %}
+    <div class="offcanvas-body">
+        {% if user.is_authenticated %}
+            <div class="bg-white bg-opacity-10 p-3 rounded-3 mb-4 border border-white border-opacity-10">
+                <small class="text-white-50 d-block mb-1">BALANS</small>
+                <h4 class="text-white fw-bold mb-0">{{ user_wallet.balance|floatformat:"0" }} so'm</h4>
+            </div>
+        {% endif %}
+        <ul class="nav flex-column gap-2">
+            <li><a class="nav-link text-white" href="{% url 'product_list' %}"><i class="bi bi-house me-2"></i>
+                Asosiy</a></li>
+            <li><a class="nav-link text-white" href="{% url 'category_list' %}"><i class="bi bi-grid me-2"></i>
+                Kategoriyalar</a></li>
+            <li><a class="nav-link text-white" href="{% url 'my_bids' %}"><i class="bi bi-hammer me-2"></i>
+                Ishtirokim</a></li>
+            <li><a class="nav-link text-white" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i> Profilim</a>
+            </li>
+        </ul>
+        <div class="mt-4">
+            <a href="{% url 'product_create' %}" class="btn btn-warning w-100 py-3">+ YANGI E'LON</a>
+            {% if user.is_authenticated %}
+                <form action="{% url 'logout' %}" method="post" class="mt-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link text-white-50 text-decoration-none p-0 w-100 text-start">
+                        <i class="bi bi-box-arrow-right me-2"></i> Chiqish
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi bi-info-circle me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
     {% endif %}
 
-    {% block content %}
-    {% endblock %}
+    {% block content %}{% endblock %}
 </div>
 
 <footer class="py-4 mt-5 bg-white border-top">
-    <div class="container text-center">
-        <p class="text-muted mb-0">&copy; 2026 Hosil Pro Auksion Platformasi. Barcha huquqlar himoyalangan.</p>
+    <div class="container text-center text-muted">
+        <p class="mb-0">&copy; 2026 Hosil Pro Auksion Platformasi.</p>
     </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+<script>
+    Fancybox.bind("[data-fancybox]", {
+        l10n: {CLOSE: "Yopish", NEXT: "Keyingi", PREV: "Oldingi"}
+    });
+</script>
+
 </body>
 </html>

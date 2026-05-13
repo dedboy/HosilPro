@@ -1,6 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    .custom-file-upload {
+        border: 2px dashed #28a745;
+        display: block;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 10px;
+        background-color: #f8fff9;
+        transition: 0.3s;
+    }
+    .custom-file-upload:hover {
+        background-color: #e9f7ec;
+        border-color: #218838;
+    }
+    .hidden-input {
+        display: none;
+    }
+    .btn-duration {
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+</style>
+
 <div class="row justify-content-center mt-5">
     <div class="col-md-8">
         <div class="card shadow p-4 border-0">
@@ -8,7 +32,7 @@
                 {% if is_edit %}Mahsulotni tahrirlash{% else %}Yangi mahsulot joylash{% endif %}
             </h2>
 
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" id="auctionForm">
                 {% csrf_token %}
 
                 <div class="mb-3">
@@ -22,7 +46,21 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Tavsifi</label>
+                    <label class="form-label fw-bold d-block">Mahsulot holati:</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="checkbox" class="btn-check" id="fresh" name="condition" value="Yangi uzilgan">
+                        <label class="btn btn-outline-success" for="fresh">Yangi uzilgan</label>
+
+                        <input type="checkbox" class="btn-check" id="sorted" name="condition" value="Saralangan">
+                        <label class="btn btn-outline-success" for="sorted">Saralangan</label>
+
+                        <input type="checkbox" class="btn-check" id="dried" name="condition" value="Quritilgan">
+                        <label class="btn btn-outline-success" for="dried">Quritilgan</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tavsifi (Ixtiyoriy)</label>
                     {{ form.description }}
                 </div>
 
@@ -33,25 +71,45 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Auksion tugash vaqti</label>
+                        <div class="d-flex gap-1 mb-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-duration" onclick="setEndTime(3)">3 kun</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-duration" onclick="setEndTime(7)">1 hafta</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-duration" onclick="setEndTime(10)">10 kun</button>
+                        </div>
                         {{ form.end_time }}
                     </div>
                 </div>
 
+                <!-- Asosiy rasm -->
                 <div class="mb-3">
                     <label class="form-label fw-bold">Asosiy rasm (Muqova)</label>
-                    {{ form.image }}
+                    <label for="{{ form.image.id_for_label }}" class="custom-file-upload w-100">
+                        <i class="fas fa-camera fa-2x d-block mb-2 text-success"></i>
+                        <span id="main-image-label">Rasm tanlash yoki rasmga olish +</span>
+                    </label>
+                    <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" class="hidden-input" accept="image/*" capture="environment">
                 </div>
 
                 <hr class="my-4">
 
                 <h4 class="mb-3 fw-bold text-primary">Qo'shimcha rasmlar (Ixtiyoriy)</h4>
 
+                <!-- Management form (MUHIM) -->
                 {{ formset.management_form }}
+
                 <div class="row">
                     {% for image_form in formset %}
-                        <div class="col-md-4 mb-3 text-center">
-                            <div class="p-2 border rounded bg-light">
-                                {{ image_form.image }}
+                        <div class="col-md-4 mb-3">
+                            <div class="p-2 border rounded bg-light text-center">
+                                <!-- ID (MUHIM) -->
+                                {{ image_form.id }}
+
+                                <label for="{{ image_form.image.id_for_label }}" class="btn btn-sm btn-outline-primary mb-2">
+                                     Rasm +
+                                </label>
+                                <input type="file" name="{{ image_form.image.html_name }}" id="{{ image_form.image.id_for_label }}" class="hidden-input" accept="image/*">
+                                <div class="small text-truncate" id="label-{{ image_form.image.id_for_label }}">Tanlanmagan</div>
+
                                 {% if image_form.instance.pk %}
                                     <div class="mt-2 text-danger">
                                         {{ image_form.DELETE }} O'chirish
@@ -71,10 +129,35 @@
 </div>
 
 <script>
+    // Avtomatik form-control klassini qo'shish
     document.querySelectorAll('input, select, textarea').forEach(function(el) {
-        if (el.type !== 'checkbox') {
+        if (!['checkbox', 'file', 'radio'].includes(el.type)) {
             el.classList.add('form-control');
         }
+    });
+
+    // Muddatni hisoblash (JS funksiyasi)
+    function setEndTime(days) {
+        const now = new Date();
+        now.setDate(now.getDate() + days);
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('auction_end_time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // Fayl nomini ko'rsatish logikasi
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : "Tanlanmagan";
+            if (this.id === '{{ form.image.id_for_label }}') {
+                document.getElementById('main-image-label').innerText = fileName;
+            } else {
+                document.getElementById('label-' + this.id).innerText = fileName;
+            }
+        });
     });
 </script>
 {% endblock %}

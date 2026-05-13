@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'users.apps.UsersConfig',
     'auctions',
 ]
@@ -47,6 +48,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'auctions.context_processors.notifications_count',
+                'auctions.context_processors.wallet_balance',
             ],
         },
     },
@@ -79,6 +81,7 @@ LANGUAGE_CODE = 'uz'
 TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
 USE_TZ = True
+THOUSAND_SEPARATOR = ' '
 
 # ─── Static & Media ──────────────────────────────────
 STATIC_URL = '/static/'
