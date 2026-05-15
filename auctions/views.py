@@ -133,11 +133,14 @@ def deposit_view(request):
             )
 
             messages.success(request, f"Hamyoningiz {amount} so'mga to'ldirildi!")
-            return redirect('profile')
-    else:
-        form = DepositForm()
-    return render(request, 'auctions/deposit.html', {'form': form, 'wallet': wallet})
 
+            # 1. 'profile' o'rniga 'users:profile' (namespace bilan) yozamiz
+            # Bu seni o'sha chiroyli profil sahifangga qaytaradi
+            return redirect('users:profile')
+
+            # 2. Agar kimdir tasodifan GET so'rov bilan kelsa ham,
+    # uni xunuk deposit.html ga emas, profilga qaytarib yuboramiz
+    return redirect('users:profile')
 
 # 5. WITHDRAW (PUL YECHISH) - TO'G'RILANDI
 @login_required

@@ -8,7 +8,6 @@
             </a>
         </div>
 
-        <!-- Asosiy rasm -->
         <div class="main-image mb-3">
             <a href="{{ product.image.url }}" data-fancybox="gallery" data-caption="Asosiy rasm">
                 <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm w-100" alt="{{ product.title }}"
@@ -16,7 +15,6 @@
             </a>
         </div>
 
-        <!-- Qo'shimcha rasmlar (Gallery) -->
         {% if product.images.all %}
             <div class="row g-2">
                 <h6 class="fw-bold mt-2 text-muted">Barcha rasmlar:</h6>
@@ -24,20 +22,12 @@
                     <div class="col-3">
                         <a href="{{ img.image.url }}" data-fancybox="gallery" data-caption="{{ product.title }} - rasm">
                             <img src="{{ img.image.url }}" class="img-thumbnail"
-                                 style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                                 style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;" alt="">
                         </a>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
-
-        <!-- Fancybox JS (Faylning eng oxiriga, scriptlar qismiga qo'shing) -->
-        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
-        <script>
-            Fancybox.bind("[data-fancybox]", {
-                // Galereya sozlamalari
-            });
-        </script>
 
         <div class="col-md-6">
             <div class="d-flex justify-content-between align-items-start">
@@ -55,7 +45,7 @@
             <div class="card border-0 bg-light mb-3">
                 <div class="card-body py-3">
                     <h6 class="text-muted mb-1">Hozirgi narx:</h6>
-                    <h2 class="text-success fw-bold mb-0">{{ product.get_current_price }} so'm</h2>
+                    <h2 class="text-success fw-bold mb-0" id="current-price-display">{{ product.get_current_price }} so'm</h2>
                 </div>
             </div>
 
@@ -151,12 +141,12 @@
                     </div>
 
                 {% else %}
-                    <form id="bid-form" method="POST" class="card p-3 shadow-sm border-0 mb-4 bg-white">
+                    <form id="bid-form" class="card p-3 shadow-sm border-0 mb-4 bg-white">
                         {% csrf_token %}
                         <label class="form-label fw-bold">Sizning taklifingiz:</label>
                         <div class="input-group input-group-lg">
-                            <input type="number" name="bid_amount" class="form-control" placeholder="Summani kiriting"
-                                   required min="{{ product.get_current_price|add:1 }}">
+                            <label for="bid-amount-input"></label><input type="number" id="bid-amount-input" name="bid_amount" class="form-control" placeholder="Summani kiriting"
+                                                                         required min="{{ product.get_current_price|add:1 }}">
                             <button class="btn btn-success px-4" type="submit">Taklif yuborish</button>
                         </div>
                         <div class="form-text text-muted mt-2">
@@ -191,7 +181,7 @@
                             <th>Vaqti</th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bid-history-body">
                         {% for bid in bids %}
                             <tr {% if forloop.first %}class="table-warning fw-bold"{% endif %}>
                                 <td class="ps-4">
@@ -204,7 +194,7 @@
                                 <td class="text-muted small">{{ bid.created_at|date:"H:i | d.m.Y" }}</td>
                             </tr>
                         {% empty %}
-                            <tr>
+                            <tr id="no-bids-row">
                                 <td colspan="3" class="text-center py-5 text-muted">
                                     Hozircha hech qanday taklif yo'q.
                                 </td>
@@ -216,9 +206,11 @@
             </div>
         </div>
     </div>
-    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
     <script>
+        Fancybox.bind("[data-fancybox]", {});
+
         function updateTimer() {
             const endTime = new Date("{{ product.end_time|date:'Y/m/d H:i:s' }}").getTime();
             const now = new Date().getTime();
@@ -229,10 +221,11 @@
             const statusBox = document.getElementById("status-box");
 
             if (distance < 0) {
-                clearInterval(x);
                 countdownElement.innerHTML = "<strong>AUKSION TUGADI</strong>";
-                statusBox.classList.remove('alert-info');
-                statusBox.classList.add('alert-danger');
+                if (statusBox) {
+                    statusBox.classList.remove('alert-info');
+                    statusBox.classList.add('alert-danger');
+                }
                 if (bidForm) bidForm.remove();
                 return;
             }
@@ -245,7 +238,50 @@
             countdownElement.innerHTML = (days > 0 ? days + "k " : "") + hours + "s " + minutes + "m " + seconds + "s ";
         }
 
-        const x = setInterval(updateTimer, 1000);
+        setInterval(updateTimer, 1000);
         updateTimer();
+
+        // WebSocket qismi
+        const auctionId = "{{ product.id }}";
+        const auctionSocket = new WebSocket('ws://' + window.location.host + '/ws/auction/' + auctionId + '/');
+
+        auctionSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            // Narxni yangilash
+            const priceDisplay = document.querySelector('#current-price-display');
+            if (priceDisplay) priceDisplay.innerText = data.bid_amount + " so'm";
+
+            // Jadvalni yangilash
+            const historyBody = document.querySelector('#bid-history-body');
+            const noBidsRow = document.querySelector('#no-bids-row');
+            if (noBidsRow) noBidsRow.remove();
+
+            const rows = historyBody.querySelectorAll('tr');
+            rows.forEach(row => row.classList.remove('table-warning', 'fw-bold'));
+
+            const timeStr = new Date().toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'});
+
+            const newRow = `
+                <tr class="table-warning fw-bold">
+                    <td class="ps-4">🚀 ${data.user} ${data.user === "{{ request.user.username }}" ? '<span class="badge bg-secondary ms-1">Siz</span>' : ''}</td>
+                    <td class="text-success">${data.bid_amount} so'm</td>
+                    <td class="text-muted small">${timeStr} | Hozir</td>
+                </tr>
+            `;
+            historyBody.insertAdjacentHTML('afterbegin', newRow);
+        };
+
+        const bidForm = document.querySelector('#bid-form');
+        if (bidForm) {
+            bidForm.onsubmit = function (e) {
+                e.preventDefault();
+                const bidInput = document.querySelector('#bid-amount-input');
+                auctionSocket.send(JSON.stringify({
+                    'bid_amount': bidInput.value
+                }));
+                bidInput.value = '';
+            };
+        }
     </script>
 {% endblock %}

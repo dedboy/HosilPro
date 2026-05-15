@@ -17,6 +17,7 @@
 
         .navbar {
             background-color: #198754 !important;
+            padding: 0.8rem 0;
         }
 
         .navbar-brand {
@@ -24,11 +25,10 @@
             letter-spacing: -1px;
         }
 
-        /* Linklar markazda bo'lishi uchun */
         .nav-link {
             font-weight: 500;
             font-size: 14.5px;
-            color: rgba(255, 255, 255, 0.7) !important;
+            color: rgba(255, 255, 255, 0.8) !important;
             transition: 0.3s;
         }
 
@@ -36,37 +36,30 @@
             color: #ffffff !important;
         }
 
-        /* image_2d1791.jpg dagi siqilishni oldini olish uchun */
-        .navbar-collapse {
-            flex-grow: 1;
-        }
-
-        /* Hamyon blokini ixcham qilish */
-        .balance-nav-card {
-            padding: 6px 12px !important; /* Ichki bo'shliqni kamaytirish */
+        /* Balans bloki dizayni */
+        .balance-container {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             min-width: 140px;
-            height: fit-content;
-            align-self: center; /* Navbarda o'rtada turishi uchun */
+            min-height: 44px;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .balance-nav-card .balance-label {
-            font-size: 0.65rem !important; /* "BALANS" yozuvini kichraytirish */
-            margin-bottom: 0 !important;
+        .balance-container:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #ffc107;
         }
 
-        .balance-nav-card .balance-amount {
-            font-size: 0.9rem !important; /* Summani moslashtirish */
-            line-height: 1.2;
-        }
-
-        .btn-warning {
-            font-weight: 700;
-            border-radius: 8px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            background-color: #ffc107;
-            border: none;
+        .plus-badge {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ffc107;
+            font-size: 18px;
+            opacity: 0.8;
         }
 
         .profile-icon {
@@ -79,25 +72,54 @@
             align-items: center;
             justify-content: center;
             color: white;
+            transition: 0.2s;
+        }
+
+        .profile-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-warning {
+            font-weight: 700;
+            border-radius: 8px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            background-color: #ffc107;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .dropdown-menu {
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 14px;
+        }
+
+        @media (max-width: 991px) {
+            .navbar-collapse {
+                margin-top: 1rem;
+            }
         }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg sticky-top py-3">
+<nav class="navbar navbar-expand-lg sticky-top">
     <div class="container">
-        <!-- Logo -->
         <a class="navbar-brand text-white fs-4 me-4" href="{% url 'product_list' %}">
             HOSIL<span style="color: #ffc107;">PRO</span>
         </a>
 
-        <!-- Burger Menu (Mobile) -->
-        <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#mobileMenu">
+        <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
             <i class="bi bi-list fs-1"></i>
         </button>
 
-        <!-- Desktop Menu -->
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item"><a class="nav-link px-3" href="{% url 'product_list' %}">Asosiy</a></li>
@@ -105,49 +127,41 @@
                 <li class="nav-item"><a class="nav-link px-3" href="{% url 'my_bids' %}">Ishtirokim</a></li>
             </ul>
 
-            <!-- O'ng tomon: Balans va Profil -->
-
             <div class="d-flex align-items-center gap-3">
                 {% if user.is_authenticated %}
-                    <!-- image_2b54bf.png dagi balans bloki uchun -->
-                    <a href="{% url 'deposit_view' %}" class="text-decoration-none ms-lg-3">
-                        <div class="d-flex flex-column justify-content-center px-3 py-1 rounded-3"
-                             style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); min-height: 45px;">
+                    <a href="{% url 'deposit_view' %}" class="text-decoration-none" title="Balansni to'ldirish">
+                        <div class="balance-container d-flex flex-column justify-content-center ps-3 pe-4 py-1 rounded-3">
                             <span style="font-size: 10px; color: rgba(255, 255, 255, 0.6); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1;">Balans</span>
                             <div class="text-white fw-bold" style="font-size: 14px; line-height: 1.2;">
-                                {% if wallet %}
-                                    {{ wallet.balance|floatformat:"0" }}
-                                    <small style="font-size: 11px; opacity: 0.8;">so'm</small>
-                                {% else %}
-                                    0 <small style="font-size: 11px; opacity: 0.8;">so'm</small>
-                                {% endif %}
+                                {% if wallet %}{{ wallet.balance|floatformat:"0" }}{% else %}0{% endif %}
+                                <small style="font-size: 11px; opacity: 0.8;">so'm</small>
+                            </div>
+                            <div class="plus-badge">
+                                <i class="bi bi-plus-circle-fill"></i>
                             </div>
                         </div>
                     </a>
+
                     <div class="dropdown">
                         <a class="p-0 border-0" href="#" data-bs-toggle="dropdown">
                             <div class="profile-icon"><i class="bi bi-person fs-5"></i></div>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="border-radius: 12px;">
-                            <li><a class="dropdown-item" href="{% url 'profile' %}">Profilim</a></li>
-
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                            <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bi bi-person me-2"></i> Profilim</a></li>
+                            <li><a class="dropdown-item" href="{% url 'withdraw_view' %}"><i class="bi bi-cash-stack me-2"></i> Mablag'ni yechish</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <!-- Profilim dan keyin qo'shing -->
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="{% url 'withdraw_view' %}">
-                                    <i class="bi bi-cash-stack me-2"></i> Mablag'ni yechish
-                                </a>
-                            </li>
-                            <li>
-                                <form action="{% url 'logout' %}" method="post" class="m-0">
+                                <form action="{% url 'users:logout' %}" method="post" class="m-0">
                                     {% csrf_token %}
-                                    <button type="submit" class="dropdown-item text-danger">Chiqish</button>
+                                    <button type="submit" class="dropdown-item text-danger w-100 text-start">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Chiqish
+                                    </button>
                                 </form>
                             </li>
                         </ul>
                     </div>
+                {% else %}
+                    <a href="{% url 'users:login' %}" class="nav-link">Kirish</a>
                 {% endif %}
 
                 <a href="{% url 'product_create' %}" class="btn btn-warning px-4">+ E'LON</a>
@@ -156,7 +170,6 @@
     </div>
 </nav>
 
-<!-- MOBILE MENU (OFFCANVAS) -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu" style="background-color: #198754; width: 280px;">
     <div class="offcanvas-header border-bottom border-white border-opacity-10 py-4">
         <h5 class="offcanvas-title text-white fw-bold">HOSIL<span class="text-warning">PRO</span></h5>
@@ -164,25 +177,34 @@
     </div>
     <div class="offcanvas-body">
         {% if user.is_authenticated %}
-            <div class="bg-white bg-opacity-10 p-3 rounded-3 mb-4 border border-white border-opacity-10">
-                <small class="text-white-50 d-block mb-1">BALANS</small>
-                <h4 class="text-white fw-bold mb-0">{{ user_wallet.balance|floatformat:"0" }} so'm</h4>
+            <div class="bg-white bg-opacity-10 p-3 rounded-3 mb-4 border border-white border-opacity-10 text-center">
+                <small class="text-white-50 d-block mb-1 text-uppercase fw-bold" style="letter-spacing: 1px;">Mavjud Balans</small>
+                <h4 class="text-white fw-bold mb-2">{% if wallet %}{{ wallet.balance|floatformat:"0" }}{% else %}0{% endif %} so'm</h4>
+                <a href="{% url 'deposit_view' %}" class="btn btn-sm btn-outline-light w-100 mt-2" style="font-size: 12px; border-radius: 8px;">
+                    <i class="bi bi-plus-circle me-1"></i> Balansni to'ldirish
+                </a>
             </div>
         {% endif %}
+
         <ul class="nav flex-column gap-2">
-            <li><a class="nav-link text-white" href="{% url 'product_list' %}"><i class="bi bi-house me-2"></i>
-                Asosiy</a></li>
-            <li><a class="nav-link text-white" href="{% url 'category_list' %}"><i class="bi bi-grid me-2"></i>
-                Kategoriyalar</a></li>
-            <li><a class="nav-link text-white" href="{% url 'my_bids' %}"><i class="bi bi-hammer me-2"></i>
-                Ishtirokim</a></li>
-            <li><a class="nav-link text-white" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i> Profilim</a>
-            </li>
-        </ul>
-        <div class="mt-4">
-            <a href="{% url 'product_create' %}" class="btn btn-warning w-100 py-3">+ YANGI E'LON</a>
+            <li><a class="nav-link text-white" href="{% url 'product_list' %}"><i class="bi bi-house me-2"></i> Asosiy</a></li>
+            <li><a class="nav-link text-white" href="{% url 'category_list' %}"><i class="bi bi-grid me-2"></i> Kategoriyalar</a></li>
+            <li><a class="nav-link text-white" href="{% url 'my_bids' %}"><i class="bi bi-hammer me-2"></i> Ishtirokim</a></li>
+
             {% if user.is_authenticated %}
-                <form action="{% url 'logout' %}" method="post" class="mt-3">
+                <li><a class="nav-link text-white" href="{% url 'users:profile' %}"><i class="bi bi-person me-2"></i> Profilim</a></li>
+                <li><a class="nav-link text-white" href="{% url 'withdraw_view' %}"><i class="bi bi-cash-stack me-2"></i> Mablag'ni yechish</a></li>
+            {% else %}
+                <li class="mt-2"><hr class="text-white opacity-20"></li>
+                <li><a class="nav-link text-warning fw-bold" href="{% url 'users:login' %}"><i class="bi bi-box-arrow-in-right me-2"></i> Kirish</a></li>
+                <li><a class="nav-link text-white" href="{% url 'users:register' %}"><i class="bi bi-person-plus me-2"></i> Ro'yxatdan o'tish</a></li>
+            {% endif %}
+        </ul>
+
+        <div class="mt-4">
+            <a href="{% url 'product_create' %}" class="btn btn-warning w-100 py-3 fw-bold">+ YANGI E'LON</a>
+            {% if user.is_authenticated %}
+                <form action="{% url 'users:logout' %}" method="post" class="mt-3">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-link text-white-50 text-decoration-none p-0 w-100 text-start">
                         <i class="bi bi-box-arrow-right me-2"></i> Chiqish

@@ -1,4 +1,4 @@
-{% extends 'auctions/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container py-5">
@@ -16,7 +16,6 @@
 
                     <div class="alert alert-info border-0" style="border-radius: 10px;">
                         <small class="d-block text-uppercase fw-bold opacity-75">Joriy balans:</small>
-                        <!-- user.wallet.balance o'rniga wallet.balance -->
                         <h3 class="mb-0 fw-bold">{{ wallet.balance|floatformat:"0" }} so'm</h3>
                     </div>
 
@@ -34,7 +33,6 @@
                             PULNI YECHISH
                         </button>
                     </form>
-                    <!-- ... qolgan qismi o'zgarishsiz ... -->
                 </div>
             </div>
         </div>
