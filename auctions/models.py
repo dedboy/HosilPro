@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+from django.db import transaction
 # --- HAMYON TIZIMI MODELLARI ---
 
 class Wallet(models.Model):
@@ -112,12 +112,51 @@ class Product(models.Model):
         return timezone.now() > self.end_time
 
     def determine_winner(self):
-        if self.is_finished() and not self.winner:
-            highest_bid = self.bids.order_by('-amount').first()
-            if highest_bid:
+    if self.is_finished() and not self.winner:
+        highest_bid = self.bids.order_by('-amount').first()
+        if highest_bid:
+            with transaction.atomic():
                 self.winner = highest_bid.user
                 self.save()
-        return self.winner
+
+                # G'olibning muzlatilgan pulini yechish
+                winner_wallet, _ = Wallet.objects.get_or_create(user=highest_bid.user)
+                winner_wallet.balance -= highest_bid.amount
+                winner_wallet.frozen_balance -= highest_bid.amount
+                winner_wallet.save()
+
+                # Sotuvchiga pul o'tkazish
+                owner_wallet, _ = Wallet.objects.get_or_create(user=self.owner)
+                owner_wallet.balance += highest_bid.amount
+                owner_wallet.save()
+
+                # Tranzaksiyalar yozish
+                Transaction.objects.create(
+                    wallet=winner_wallet,
+                    amount=highest_bid.amount,
+                    transaction_type='payment',
+                    description=f"'{self.title}' auksioni uchun to'lov"
+                )
+                Transaction.objects.create(
+                    wallet=owner_wallet,
+                    amount=highest_bid.amount,
+                    transaction_type='deposit',
+                    description=f"'{self.title}' auksionidan tushum"
+                )
+
+                # Bildirishnomalar
+                Notification.objects.create(
+                    recipient=highest_bid.user,
+                    message=f"Tabriklaymiz! Siz '{self.title}' auksionini yutdingiz!",
+                    link=f"/product/{self.pk}/"
+                )
+                Notification.objects.create(
+                    recipient=self.owner,
+                    message=f"'{self.title}' auksioni tugadi. {highest_bid.amount} so'm hisobingizga o'tkazildi.",
+                    link=f"/product/{self.pk}/"
+                )
+
+    return self.winner
 
     def __str__(self):
         return self.title

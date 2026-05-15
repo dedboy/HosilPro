@@ -133,7 +133,7 @@ def deposit_view(request):
             )
 
             messages.success(request, f"Hamyoningiz {amount} so'mga to'ldirildi!")
-            return redirect('profile')
+            return redirect('users:profile')
     else:
         form = DepositForm()
     return render(request, 'auctions/deposit.html', {'form': form, 'wallet': wallet})
