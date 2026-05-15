@@ -115,7 +115,7 @@ class Product(models.Model):
     if self.is_finished() and not self.winner:
         highest_bid = self.bids.order_by('-amount').first()
         if highest_bid:
-            with transaction.atomic():
+            with db_transaction.atomic():
                 self.winner = highest_bid.user
                 self.save()
 
@@ -130,7 +130,7 @@ class Product(models.Model):
                 owner_wallet.balance += highest_bid.amount
                 owner_wallet.save()
 
-                # Tranzaksiyalar yozish
+                # Tranzaksiyalar
                 Transaction.objects.create(
                     wallet=winner_wallet,
                     amount=highest_bid.amount,
@@ -157,7 +157,6 @@ class Product(models.Model):
                 )
 
     return self.winner
-
     def __str__(self):
         return self.title
 

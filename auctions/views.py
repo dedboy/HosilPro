@@ -167,7 +167,7 @@ def withdraw_view(request):
                 )
 
                 messages.success(request, f"{amount} so'm muvaffaqiyatli yechildi.")
-                return redirect('profile')
+                return redirect('users:profile')
             else:
                 messages.error(request, "Mablag' yetarli emas yoki auksionda muzlatilgan!")
         else:
