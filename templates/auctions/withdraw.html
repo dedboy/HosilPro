@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends 'base.html' %}
 
 {% block content %}
@@ -38,4 +39,46 @@
         </div>
     </div>
 </div>
+=======
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="display-6 text-danger mb-2">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h2 class="fw-bold">Mablag'ni yechish</h2>
+                        <p class="text-muted">Balansingizdagi mavjud mablag'ni shaxsiy hisobingizga o'tkazing</p>
+                    </div>
+
+                    <div class="alert alert-info border-0" style="border-radius: 10px;">
+                        <small class="d-block text-uppercase fw-bold opacity-75">Joriy balans:</small>
+                        <h3 class="mb-0 fw-bold">{{ wallet.balance|floatformat:"0" }} so'm</h3>
+                    </div>
+
+                    <form method="post" action="{% url 'withdraw_view' %}" class="mt-4">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Yechib olinadigan summa</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted">UZS</span>
+                                <input type="number" name="amount" class="form-control border-start-0 ps-0" placeholder="0.00" min="1000" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 py-3 fw-bold" style="border-radius: 10px;">
+                            PULNI YECHISH
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+>>>>>>> 5030789163568275ca2691ace4eccc39a28797a5
 {% endblock %}

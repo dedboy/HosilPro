@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('auctions.urls')), # Asosiy sahifa va auksionlar
-    path('users/', include('users.urls')), # Users appini ulash
+    path('users/', include('users.urls', namespace='users')), # Users appini ulash
 ]
 
 if settings.DEBUG:
